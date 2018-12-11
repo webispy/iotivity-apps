@@ -1,0 +1,3 @@
+[submodule "external/stackmenu"]
+	path = external/stackmenu
+	url = https://github.com/webispy/stackmenu
