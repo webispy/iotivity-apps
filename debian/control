@@ -1,0 +1,27 @@
+Source: iotivity-apps
+Section: net
+Priority: optional
+Maintainer: Inho Oh <webispy@gmail.com>
+Build-Depends: debhelper (>=9),
+	cmake,
+	pkg-config,
+	libglib2.0-dev,
+	iotivity-dev,
+	libsqlite3-dev,
+	vim-common
+Standards-Version: 3.9.6
+Vcs-Git: https://github.com/webispy/iotivity-apps.git
+Vcs-Browser: https://github.com/webispy/iotivity-apps
+
+Package: iotivity-apps
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: iotivity applications
+
+Package: iotivity-apps-dbg
+Section: debug
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: iotivity applications - Debug symbols
