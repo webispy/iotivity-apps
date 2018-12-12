@@ -1,0 +1,47 @@
+language: generic
+sudo: required
+services: docker
+addons:
+  apt:
+    update: true
+    packages:
+    - qemu-user-static
+    - binfmt-support
+env:
+  matrix:
+  - TARGET=ux64 CHROOT=xenial-amd64 HOST=amd64
+  - TARGET=u710cross CHROOT=xenial-amd64-arm64 HOST=arm64
+  - TARGET=u530cross CHROOT=xenial-amd64-armhf HOST=armhf
+
+before_install:
+- wget https://github.com/webispy/iotivity/releases/download/release_181211/iotivity-dev_1.3.1-1_$HOST.deb
+- wget https://github.com/webispy/iotivity/releases/download/release_181211/iotivity_1.3.1-1_$HOST.deb
+
+install:
+- update-binfmts --display
+- docker system info
+- sudo rm /dev/shm
+- sudo mkdir /dev/shm
+- sudo mount --bind /run/shm /dev/shm
+- docker pull webispy/artik_devenv_$TARGET
+
+script:
+- docker run -it --name builder --privileged -v /var/lib/schroot -v $PWD:/home/work/src
+  -w /home/work/src webispy/artik_devenv_$TARGET bash -c "mkdir /home/work/result
+  && sbuild --chroot $CHROOT --host $HOST --dpkg-source-opts=\"-I.git*\" --extra-package=iotivity_1.3.1-1_$HOST.deb
+  --extra-package=iotivity-dev_1.3.1-1_$HOST.deb && cp /home/work/*.deb /home/work/result/"
+
+before_deploy:
+- docker cp builder:/home/work/result /tmp/
+- ls -l /tmp/result
+
+deploy:
+  provider: releases
+  api_key:
+    secure: FXc/1duQw9FkTefB+Ec6Ou6VbHWxHjsKR+LwyXz02/x4C+YDae8xosjR1FwV/+37+vpUrsJv5uqG4L2J5d57c9rGOsMxj3NfXXrJ74CTj2icv05hlFfQxWlwQoF9FPJf5dMpASKurZu25wCQFYtZ7pW6Fhebaxw5YG7E8S9phFnegS5lctpkbynabobFzDxhaVZqMsJtljng2TJt83h/l0wBa5Igs76aqlUKZfgYiotgb6kEZKAC9KkcFPMPWBFnkC29rRh0ncY0ofARA4M58TEggdCVhDntho8t98V64SMwyaCIKZNcOCdmXEYdz4Ybk2q2+FFPIYA8C5NyhEiZdnsliicLDg/DH0AaszaEqVi83ih/dVr9qmI0oJ/LJl/7YtoYxDD8BEL4JldGNuKwovGWgzmOT7SEStLpKe+Uk/zFYKWe6tt2oEBDJ4IJ8JfPErUgCEs3FcKP5O0N7XjTuRrPDxQ7VXVuGz4ddedcpTRmqbKtYfal2ABSAh2bsrvKm1KXypefnhPrUi6Ct0/21SNacojq6fxfRv1SagWc5tpIWs38neAURzlxK2iY8DImzarjwE1U4dqz0BAIwUqDwU6ekL1i8I9tYsfzBAAX2IrvzVTUqZKTnv0IwlClybNgOKkYJvjut0+MtL7Ml92naz9l0xoZGoJqWuf9Koj/ENc=
+  file_glob: true
+  file: /tmp/result/*
+  skip_cleanup: true
+  on:
+    repo: webispy/iotivity-apps
+    tags: true
